@@ -15,21 +15,6 @@
   'use strict';
   if (!document.querySelectorAll('.lang-toggle-container')) return;
 
-  const updateDateElm = document.querySelectorAll('time[data-article-date-source="ms.date"]')[0];
-  if (updateDateElm) {
-    const updateDate = new Date(updateDateElm.getAttribute('datetime'));
-    if (updateDateElm && updateDate.getFullYear() > 2000) {
-      const urlEnUs = document.location.href.replace(/^(https:\/\/docs.microsoft.com\/)[^/]+(\/.*)$/, '$1en-us$2');
-      const response = await fetch(urlEnUs);
-      const body = await response.text();
-      const datetime = body.replace(/^[\w\W]*<time[^>]* datetime="([^"]+)"[^>]*>[^<]+<\/time>[\w\W]*$/, "$1");
-      const updateDateEnUs = new Date(datetime);
-      if (updateDate.getTime() < updateDateEnUs.getTime()) {
-        updateDateElm.innerHTML = `<a href="${urlEnUs}" style="--balloon-color: red;" aria-label="英語版は ${updateDateEnUs.getFullYear()}/${updateDateEnUs.getMonth()+1}/${updateDateEnUs.getDate()} に更新されています" data-balloon-pos="up" target="_blank" rel="noopener noreferrer">⚠️${updateDateElm.innerText}</a>`;
-      }
-    }
-  }
-
   const link4balloon = document.createElement('link');
   link4balloon.setAttribute('rel', 'stylesheet');
   link4balloon.setAttribute('href', 'https://unpkg.com/balloon-css/balloon.min.css');
@@ -58,6 +43,21 @@ cursor: default;
       elm.setAttribute('data-balloon-pos', 'up');
       // elm.title = elm.nextSibling.innerText
   });
+
+  const updateDateElm = document.querySelectorAll('time[data-article-date-source="ms.date"]')[0];
+  if (!updateDateElm) return;
+
+  const updateDate = new Date(updateDateElm.getAttribute('datetime'));
+  if (!updateDateElm || updateDate.getFullYear() < 2000) return;
+
+  const urlEnUs = document.location.href.replace(/^(https:\/\/docs.microsoft.com\/)[^/]+(\/.*)$/, '$1en-us$2');
+  const response = await fetch(urlEnUs);
+  const body = await response.text();
+  const datetime = body.replace(/^[\w\W]*<time[^>]* datetime="([^"]+)"[^>]*>[^<]+<\/time>[\w\W]*$/, "$1");
+  const updateDateEnUs = new Date(datetime);
+  if (updateDate.getTime() >= updateDateEnUs.getTime()) return;
+
+  updateDateElm.innerHTML = `<a href="${urlEnUs}" style="--balloon-color: red;" aria-label="英語版は ${updateDateEnUs.getFullYear()}/${updateDateEnUs.getMonth()+1}/${updateDateEnUs.getDate()} に更新されています" data-balloon-pos="up" target="_blank" rel="noopener noreferrer">⚠️${updateDateElm.innerText}</a>`;
 
   return;
 })();
